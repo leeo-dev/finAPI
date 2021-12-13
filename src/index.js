@@ -1,4 +1,5 @@
 const express = require("express");
+const res = require("express/lib/response");
 const { v4: uuidV4 } = require("uuid");
 const app = express();
 const PORT = 3000;
@@ -13,13 +14,13 @@ const customers = [
       {
         description: "Ganhos",
         amount: 5000,
-        createdAt: "2021-12-12T18:41:09.104Z",
+        createdAt: "2021-12-12",
         type: "credit",
       },
       {
         description: "Jobs",
         amount: 3000,
-        createdAt: "2021-12-12T18:41:18.435Z",
+        createdAt: "2021-12-12",
         type: "credit",
       },
     ],
@@ -59,6 +60,20 @@ app.get("/statement/", verifyExistsAccountCPF, (request, response) => {
   const { customer } = request;
   return response.json(customer.statement);
 });
+app.get("/statement/:date", verifyExistsAccountCPF, (request, response) => {
+  const { customer } = request;
+  const { date } = request.params;
+  const options = { year: "numeric", month: "numeric", day: "numeric" };
+  const formatDate = new Date(date);
+  const formattedDate = formatDate.toLocaleDateString("pt-br", options);
+  const statement = customer.statement.filter((statement) => {
+    const statementDate = new Date(statement.createdAt);
+    //prettier-ignore
+    const formatStatementDate = statementDate.toLocaleDateString("pt-br", options);
+    return formatStatementDate === formattedDate;
+  });
+  return response.json(statement);
+});
 app.post("/deposit", verifyExistsAccountCPF, (request, response) => {
   const { description, amount } = request.body;
   const { customer } = request;
@@ -88,7 +103,23 @@ app.post("/withdraw", verifyExistsAccountCPF, (request, response) => {
     success: "Successful withdrawal.",
   });
 });
-app.get("/statement/date", verifyExistsAccountCPF, (request, response) => {});
-
+app.put("/account", verifyExistsAccountCPF, (request, response) => {
+  const { name } = request.body;
+  const { customer } = request;
+  customer.name = name;
+  response.status(201).send();
+});
+app.get("/account", verifyExistsAccountCPF, (request, response) => {
+  const { customer } = request;
+  return response.json(customer);
+});
+app.delete("/account", verifyExistsAccountCPF, (request, response) => {
+  const { customer } = request;
+  const indexCustomer = customers.findIndex(
+    (customerSystem) => customerSystem.cpf === customer.cpf
+  );
+  console.log(indexCustomer);
+  customers.splice(indexCustomer, 1);
+});
 //prettier-ignore
 app.listen(PORT || 5000, () => console.log(`Server is running on port ${PORT}`));
