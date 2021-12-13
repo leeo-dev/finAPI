@@ -118,8 +118,13 @@ app.delete("/account", verifyExistsAccountCPF, (request, response) => {
   const indexCustomer = customers.findIndex(
     (customerSystem) => customerSystem.cpf === customer.cpf
   );
-  console.log(indexCustomer);
   customers.splice(indexCustomer, 1);
+  response.status(204).send();
+});
+app.get("/balance", verifyExistsAccountCPF, (request, response) => {
+  const { customer } = request;
+  const balance = getBalance(customer.statement);
+  return response.json({ balance });
 });
 //prettier-ignore
 app.listen(PORT || 5000, () => console.log(`Server is running on port ${PORT}`));
